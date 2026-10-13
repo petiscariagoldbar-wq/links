@@ -65,9 +65,15 @@
     font-weight: 600;
     font-size: 22px;
     letter-spacing: 0.06em;
+    white-space: nowrap;
+    gap: 12px;
     transition: background 0.2s, color 0.2s, border-color 0.2s;
   }
+  /* O rótulo pequeno quebra em duas linhas no celular; o nome do botão fica sempre inteiro. */
   .botao small {
+    white-space: normal;
+    text-align: right;
+    line-height: 1.6;
     font-family: "Montserrat", sans-serif;
     font-weight: 500;
     font-size: 10px;
@@ -126,7 +132,7 @@
       RESERVAR MESA <small>WHATSAPP</small>
     </a>
     <a class="botao" href="https://www.ifood.com.br/delivery/itaguai-rj/gold-bar---picanha-petiscos-e-refeicoes-jardim-america/512b5e70-87fd-4292-aadd-f1d73f983216" target="_blank" rel="noopener">
-      PEDIR NO IFOOD <small>DELIVERY</small>
+      PEDIR NO IFOOD <small>A PARTIR DAS&nbsp;19H</small>
     </a>
     <a class="botao" href="https://qrcode.tisoftlab.com/?verificador=2625131510" target="_blank" rel="noopener">
       VER CARDÁPIO <small>DIGITAL</small>
