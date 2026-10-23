@@ -15,9 +15,11 @@
     --ouro: #C9A24B;
     --creme: #F4EBD8;
     --fio: rgba(201, 162, 75, 0.55);
+    --fio-leve: rgba(201, 162, 75, 0.22);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--preto); color: var(--creme); }
+  html { scroll-behavior: smooth; }
   body {
     font-family: "Montserrat", system-ui, sans-serif;
     min-height: 100vh;
@@ -26,6 +28,7 @@
     padding: 40px 20px 32px;
   }
   main { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
 
   .cabecalho {
     width: 100%;
@@ -67,7 +70,7 @@
     letter-spacing: 0.06em;
     white-space: nowrap;
     gap: 12px;
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
   }
   /* O rótulo pequeno quebra em duas linhas no celular; o nome do botão fica sempre inteiro. */
   .botao small {
@@ -83,6 +86,143 @@
   .botao:hover, .botao:focus-visible { border-color: var(--ouro); outline: none; }
   .botao.principal { background: var(--ouro); color: var(--preto); border-color: var(--ouro); }
   .botao.principal small { color: var(--preto); opacity: 0.75; }
+  .botao.principal:focus-visible { outline: 2px solid var(--creme); outline-offset: 2px; }
+
+  /* ---------- Painel de reserva ---------- */
+  .painel {
+    display: none;
+    border: 1px solid var(--ouro);
+    border-top: none;
+    margin-top: -12px;
+    padding: 22px 16px 20px;
+  }
+  .painel.aberto { display: block; animation: surgir 0.25s ease-out; }
+  @keyframes surgir { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+  .passo { margin-top: 26px; }
+  .passo:first-child { margin-top: 0; }
+  .passo[hidden] { display: none; }
+  .passo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ouro);
+  }
+  .passo-titulo b {
+    display: inline-grid;
+    place-items: center;
+    width: 20px; height: 20px;
+    border: 1px solid var(--ouro);
+    border-radius: 50%;
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .passo-titulo .escolhido { margin-left: auto; color: var(--creme); opacity: 0.7; letter-spacing: 0.1em; }
+
+  .mes-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .mes-nav strong {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    letter-spacing: 0.08em;
+  }
+  .mes-nav button {
+    width: 40px; height: 40px;
+    border: 1px solid var(--fio);
+    font-size: 18px;
+    color: var(--ouro);
+  }
+  .mes-nav button:disabled { opacity: 0.2; cursor: default; }
+
+  .grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .grade .rotulo {
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    padding: 6px 0;
+    opacity: 0.6;
+  }
+  .dia {
+    position: relative;
+    aspect-ratio: 1;
+    border: 1px solid transparent;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .dia:disabled { opacity: 0.2; cursor: default; }
+  .dia.livre { border-color: var(--fio); }
+  .dia.livre:hover { border-color: var(--ouro); }
+  .dia.hoje::after {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: 5px;
+    width: 4px; height: 4px;
+    margin-left: -2px;
+    border-radius: 50%;
+    background: var(--ouro);
+  }
+  .dia[aria-pressed="true"] { background: var(--ouro); color: var(--preto); border-color: var(--ouro); }
+  .dia[aria-pressed="true"]::after { background: var(--preto); }
+
+  .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .chips.dois { grid-template-columns: repeat(2, 1fr); }
+  .chip {
+    padding: 12px 4px;
+    border: 1px solid var(--fio);
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+  }
+  .chips.dois .chip { font-family: "Montserrat", sans-serif; font-size: 11px; letter-spacing: 0.06em; font-weight: 500; }
+  .chip:hover { border-color: var(--ouro); }
+  .chip[aria-pressed="true"] { background: var(--ouro); color: var(--preto); border-color: var(--ouro); }
+  .sem-horario { font-size: 12px; line-height: 1.6; opacity: 0.8; }
+
+  .contador { display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--fio); }
+  .contador button { width: 56px; height: 52px; font-size: 24px; color: var(--ouro); }
+  .contador button:disabled { opacity: 0.2; cursor: default; }
+  .contador output {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 26px;
+  }
+  .contador output small { font-family: "Montserrat", sans-serif; font-size: 10px; letter-spacing: 0.2em; color: var(--ouro); margin-left: 6px; }
+  .aviso-grupo { margin-top: 10px; font-size: 11px; line-height: 1.6; opacity: 0.8; }
+  .aviso-grupo[hidden] { display: none; }
+
+  label.campo { display: block; }
+  .campo input {
+    width: 100%;
+    padding: 15px 14px;
+    background: transparent;
+    border: 1px solid var(--fio);
+    color: var(--creme);
+    font: 500 16px "Montserrat", sans-serif;
+  }
+  .campo input::placeholder { color: var(--creme); opacity: 0.4; }
+  .campo input:focus { outline: none; border-color: var(--ouro); }
+  .sub { margin: 18px 0 10px; font-size: 10px; letter-spacing: 0.25em; opacity: 0.7; }
+
+  .resumo {
+    margin-top: 26px;
+    padding: 16px;
+    border: 1px dashed var(--fio);
+    font-size: 12px;
+    line-height: 1.9;
+    letter-spacing: 0.04em;
+  }
+  .resumo dt { display: inline; color: var(--ouro); font-size: 10px; letter-spacing: 0.2em; }
+  .resumo dd { display: inline; margin-left: 6px; }
+  .resumo dd::after { content: ""; display: block; }
+
+  .enviar { margin-top: 16px; justify-content: center; }
+  .enviar:disabled { opacity: 0.35; cursor: default; }
+  .nota { margin-top: 12px; text-align: center; font-size: 10px; line-height: 1.7; letter-spacing: 0.06em; opacity: 0.7; }
 
   .endereco {
     margin-top: 28px;
@@ -110,6 +250,11 @@
 
   @media (max-width: 340px) {
     .cabecalho { white-space: normal; }
+    .chip { font-size: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .painel.aberto { animation: none; }
   }
 </style>
 </head>
@@ -128,9 +273,55 @@
   <p class="horario">QUINTA A DOMINGO · 18H — 00H</p>
 
   <nav>
-    <a class="botao principal" href="https://wa.me/5521987537624?text=Ol%C3%A1!%20Quero%20reservar%20uma%20mesa%20no%20GoldBar." target="_blank" rel="noopener">
-      RESERVAR MESA <small>WHATSAPP</small>
-    </a>
+    <button type="button" class="botao principal" id="abrir-reserva" aria-expanded="false" aria-controls="reservar">
+      RESERVAR MESA <small>ESCOLHA O DIA</small>
+    </button>
+
+    <section class="painel" id="reservar" aria-label="Reserva de mesa">
+      <div class="passo">
+        <p class="passo-titulo"><b>1</b><span>ESCOLHA O DIA</span></p>
+        <div class="mes-nav">
+          <button type="button" id="mes-anterior" aria-label="Mês anterior">‹</button>
+          <strong id="mes-nome"></strong>
+          <button type="button" id="mes-seguinte" aria-label="Próximo mês">›</button>
+        </div>
+        <div class="grade" id="calendario"></div>
+      </div>
+
+      <div class="passo" id="passo-hora" hidden>
+        <p class="passo-titulo"><b>2</b><span>HORÁRIO</span><span class="escolhido" id="dia-escolhido"></span></p>
+        <div class="chips" id="horarios"></div>
+      </div>
+
+      <div class="passo" id="passo-pessoas" hidden>
+        <p class="passo-titulo"><b>3</b><span>QUANTAS PESSOAS</span></p>
+        <div class="contador">
+          <button type="button" id="menos" aria-label="Menos uma pessoa">−</button>
+          <output id="pessoas" aria-live="polite">2<small>PESSOAS</small></output>
+          <button type="button" id="mais" aria-label="Mais uma pessoa">+</button>
+        </div>
+        <p class="aviso-grupo" id="aviso-grupo" hidden>Grupos grandes: vamos organizar o espaço com carinho. Confirmamos tudo pelo WhatsApp.</p>
+      </div>
+
+      <div class="passo" id="passo-nome" hidden>
+        <p class="passo-titulo"><b>4</b><span>SEU NOME</span></p>
+        <label class="campo">
+          <input id="nome" type="text" autocomplete="name" placeholder="Nome para a reserva" maxlength="60" enterkeyhint="done">
+        </label>
+        <p class="sub">É UMA OCASIÃO ESPECIAL? (OPCIONAL)</p>
+        <div class="chips dois" id="ocasioes">
+          <button type="button" class="chip" aria-pressed="false">ANIVERSÁRIO</button>
+          <button type="button" class="chip" aria-pressed="false">CONFRATERNIZAÇÃO</button>
+          <button type="button" class="chip" aria-pressed="false">ENCONTRO A DOIS</button>
+          <button type="button" class="chip" aria-pressed="false">JOGO / EVENTO</button>
+        </div>
+
+        <dl class="resumo" id="resumo"></dl>
+        <button type="button" class="botao principal enviar" id="enviar" disabled>CONFIRMAR NO WHATSAPP</button>
+        <p class="nota">Sua mensagem chega pronta no nosso WhatsApp.<br>A equipe responde confirmando a sua mesa.</p>
+      </div>
+    </section>
+
     <a class="botao" href="https://www.ifood.com.br/delivery/itaguai-rj/gold-bar---picanha-petiscos-e-refeicoes-jardim-america/512b5e70-87fd-4292-aadd-f1d73f983216" target="_blank" rel="noopener">
       PEDIR NO IFOOD <small>A PARTIR DAS&nbsp;19H</small>
     </a>
@@ -150,5 +341,190 @@
   </footer>
   <p class="legal">Beba com moderação · Venda proibida para menores de 18 anos</p>
 </main>
+
+<script>
+  // ===== Ajustes da casa: edite aqui =====
+  const CONFIG = {
+    whatsapp: "5521987537624",
+    // 0 = domingo, 4 = quinta, 5 = sexta, 6 = sábado
+    diasAbertos: [4, 5, 6, 0],
+    horarios: ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"],
+    antecedenciaMinutos: 60,   // para reservas no mesmo dia
+    diasNaFrente: 60,          // até quantos dias à frente aceita reserva
+    maxPessoas: 40,
+    grupoGrande: 12,           // a partir daqui mostra o aviso de grupo
+    // Datas no formato "AAAA-MM-DD"
+    fechados: [],              // feriados ou dias com a casa fechada
+    extras: [],                // dias abertos fora de quinta a domingo
+  };
+  // =======================================
+
+  const $ = (id) => document.getElementById(id);
+  const estado = { data: null, hora: null, pessoas: 2, ocasiao: null };
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const limite = new Date(hoje); limite.setDate(limite.getDate() + CONFIG.diasNaFrente);
+
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const mesmoDia = (a, b) => a && b && iso(a) === iso(b);
+  const fmtDia = (d) => d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit" });
+
+  function horariosDoDia(d) {
+    if (!mesmoDia(d, hoje)) return CONFIG.horarios;
+    const agora = new Date();
+    const minimo = agora.getHours() * 60 + agora.getMinutes() + CONFIG.antecedenciaMinutos;
+    return CONFIG.horarios.filter((h) => { const [hh, mm] = h.split(":").map(Number); return hh * 60 + mm >= minimo; });
+  }
+
+  function diaLivre(d) {
+    if (d < hoje || d > limite) return false;
+    const chave = iso(d);
+    if (CONFIG.fechados.includes(chave)) return false;
+    if (!CONFIG.diasAbertos.includes(d.getDay()) && !CONFIG.extras.includes(chave)) return false;
+    return horariosDoDia(d).length > 0;
+  }
+
+  // Abre o calendário no mês do primeiro dia disponível.
+  let vista = (() => {
+    const d = new Date(hoje);
+    for (let i = 0; i <= CONFIG.diasNaFrente && !diaLivre(d); i++) d.setDate(d.getDate() + 1);
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  })();
+
+  function desenharCalendario() {
+    const cal = $("calendario");
+    cal.innerHTML = "";
+    ["D", "S", "T", "Q", "Q", "S", "S"].forEach((l) => {
+      const r = document.createElement("span"); r.className = "rotulo"; r.textContent = l; r.setAttribute("aria-hidden", "true"); cal.append(r);
+    });
+    const nome = vista.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    $("mes-nome").textContent = nome.toUpperCase();
+
+    const ultimo = new Date(vista.getFullYear(), vista.getMonth() + 1, 0).getDate();
+    for (let i = 0; i < vista.getDay(); i++) cal.append(document.createElement("span"));
+    for (let n = 1; n <= ultimo; n++) {
+      const d = new Date(vista.getFullYear(), vista.getMonth(), n);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "dia";
+      b.textContent = n;
+      b.setAttribute("aria-label", fmtDia(d));
+      if (mesmoDia(d, hoje)) b.classList.add("hoje");
+      if (diaLivre(d)) {
+        b.classList.add("livre");
+        b.setAttribute("aria-pressed", String(mesmoDia(d, estado.data)));
+        b.onclick = () => escolherDia(d);
+      } else {
+        b.disabled = true;
+      }
+      cal.append(b);
+    }
+    $("mes-anterior").disabled = vista <= new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    $("mes-seguinte").disabled = new Date(vista.getFullYear(), vista.getMonth() + 1, 1) > limite;
+  }
+
+  function revelar(id) {
+    const el = $(id);
+    const novo = el.hidden;
+    el.hidden = false;
+    if (novo) el.scrollIntoView({ block: "nearest" });
+  }
+
+  function escolherDia(d) {
+    estado.data = d;
+    const lista = horariosDoDia(d);
+    if (!lista.includes(estado.hora)) estado.hora = null;
+    desenharCalendario();
+    $("dia-escolhido").textContent = d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }).toUpperCase();
+    const box = $("horarios");
+    box.innerHTML = "";
+    lista.forEach((h) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = h;
+      b.setAttribute("aria-pressed", String(h === estado.hora));
+      b.onclick = () => escolherHora(h);
+      box.append(b);
+    });
+    revelar("passo-hora");
+    atualizar();
+  }
+
+  function escolherHora(h) {
+    estado.hora = h;
+    $("horarios").querySelectorAll(".chip").forEach((b) => b.setAttribute("aria-pressed", String(b.textContent === h)));
+    revelar("passo-pessoas");
+    revelar("passo-nome");
+    atualizar();
+  }
+
+  function mudarPessoas(delta) {
+    estado.pessoas = Math.min(CONFIG.maxPessoas, Math.max(1, estado.pessoas + delta));
+    $("pessoas").innerHTML = `${estado.pessoas}<small>${estado.pessoas === 1 ? "PESSOA" : "PESSOAS"}</small>`;
+    $("menos").disabled = estado.pessoas <= 1;
+    $("mais").disabled = estado.pessoas >= CONFIG.maxPessoas;
+    $("aviso-grupo").hidden = estado.pessoas < CONFIG.grupoGrande;
+    atualizar();
+  }
+
+  function atualizar() {
+    const nome = $("nome").value.trim();
+    const linhas = [
+      ["DIA", estado.data ? fmtDia(estado.data) : "—"],
+      ["HORÁRIO", estado.hora || "—"],
+      ["PESSOAS", String(estado.pessoas)],
+      ["NOME", nome || "—"],
+    ];
+    if (estado.ocasiao) linhas.push(["OCASIÃO", estado.ocasiao.toLowerCase()]);
+    $("resumo").innerHTML = "";
+    linhas.forEach(([t, v]) => {
+      const dt = document.createElement("dt"); dt.textContent = t;
+      const dd = document.createElement("dd"); dd.textContent = v;
+      $("resumo").append(dt, dd);
+    });
+    const pronto = estado.data && estado.hora && nome.length >= 2;
+    $("enviar").disabled = !pronto;
+    $("enviar").textContent = pronto ? "CONFIRMAR NO WHATSAPP" : (nome.length < 2 && estado.hora ? "DIGITE SEU NOME" : "CONFIRMAR NO WHATSAPP");
+  }
+
+  function enviar() {
+    const nome = $("nome").value.trim();
+    const msg = [
+      "Olá! Quero reservar uma mesa no GoldBar.",
+      "",
+      `*Dia:* ${fmtDia(estado.data)}`,
+      `*Horário:* ${estado.hora}`,
+      `*Pessoas:* ${estado.pessoas}`,
+      `*Nome:* ${nome}`,
+      estado.ocasiao ? `*Ocasião:* ${estado.ocasiao.toLowerCase()}` : null,
+    ].filter((l) => l !== null).join("\n");
+    window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
+  }
+
+  function abrirPainel(abrir) {
+    $("reservar").classList.toggle("aberto", abrir);
+    $("abrir-reserva").setAttribute("aria-expanded", String(abrir));
+    $("abrir-reserva").querySelector("small").textContent = abrir ? "FECHAR" : "ESCOLHA O DIA";
+  }
+
+  $("abrir-reserva").onclick = () => abrirPainel(!$("reservar").classList.contains("aberto"));
+  $("mes-anterior").onclick = () => { vista = new Date(vista.getFullYear(), vista.getMonth() - 1, 1); desenharCalendario(); };
+  $("mes-seguinte").onclick = () => { vista = new Date(vista.getFullYear(), vista.getMonth() + 1, 1); desenharCalendario(); };
+  $("menos").onclick = () => mudarPessoas(-1);
+  $("mais").onclick = () => mudarPessoas(1);
+  $("nome").oninput = atualizar;
+  $("nome").onkeydown = (e) => { if (e.key === "Enter") e.target.blur(); };
+  $("ocasioes").querySelectorAll(".chip").forEach((b) => {
+    b.onclick = () => {
+      estado.ocasiao = estado.ocasiao === b.textContent ? null : b.textContent;
+      $("ocasioes").querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c.textContent === estado.ocasiao)));
+      atualizar();
+    };
+  });
+  $("enviar").onclick = enviar;
+
+  desenharCalendario();
+  mudarPessoas(0);
+  // Link direto para o calendário: .../links/#reservar
+  if (location.hash === "#reservar") abrirPainel(true);
+</script>
 </body>
 </html>
