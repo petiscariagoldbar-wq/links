@@ -222,6 +222,18 @@
 
   .enviar { margin-top: 16px; justify-content: center; }
   .enviar:disabled { opacity: 0.35; cursor: default; }
+  .sucesso { text-align: center; padding: 8px 0 0; }
+  .sucesso[hidden] { display: none; }
+  .sucesso svg { width: 56px; height: 56px; color: var(--ouro); }
+  .sucesso h2 {
+    margin-top: 14px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 28px;
+    letter-spacing: 0.06em;
+  }
+  .sucesso p { margin-top: 10px; font-size: 12px; line-height: 1.7; opacity: 0.85; }
+  .sucesso .resumo { text-align: left; }
   .nota { margin-top: 12px; text-align: center; font-size: 10px; line-height: 1.7; letter-spacing: 0.06em; opacity: 0.7; }
 
   .endereco {
@@ -304,9 +316,12 @@
       </div>
 
       <div class="passo" id="passo-nome" hidden>
-        <p class="passo-titulo"><b>4</b><span>SEU NOME</span></p>
+        <p class="passo-titulo"><b>4</b><span>SEUS DADOS</span></p>
         <label class="campo">
-          <input id="nome" type="text" autocomplete="name" placeholder="Nome para a reserva" maxlength="60" enterkeyhint="done">
+          <input id="nome" type="text" autocomplete="name" placeholder="Nome para a reserva" maxlength="60" enterkeyhint="next">
+        </label>
+        <label class="campo" style="margin-top: 10px">
+          <input id="telefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="Seu WhatsApp com DDD" maxlength="16" enterkeyhint="done">
         </label>
         <p class="sub">É UMA OCASIÃO ESPECIAL? (OPCIONAL)</p>
         <div class="chips dois" id="ocasioes">
@@ -317,8 +332,16 @@
         </div>
 
         <dl class="resumo" id="resumo"></dl>
-        <button type="button" class="botao principal enviar" id="enviar" disabled>CONFIRMAR NO WHATSAPP</button>
-        <p class="nota">Sua mensagem chega pronta no nosso WhatsApp.<br>A equipe responde confirmando a sua mesa.</p>
+        <button type="button" class="botao principal enviar" id="enviar" disabled>CONFIRMAR RESERVA</button>
+        <p class="nota" id="nota-envio">Seu pedido de reserva chega na hora para a nossa equipe.<br>Confirmamos a sua mesa pelo WhatsApp.</p>
+      </div>
+
+      <div class="sucesso" id="sucesso" hidden>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 25l7 7 13-15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2>RESERVA ENVIADA</h2>
+        <p id="sucesso-texto"></p>
+        <dl class="resumo" id="sucesso-resumo"></dl>
+        <button type="button" class="botao enviar" id="nova-reserva">FAZER OUTRA RESERVA</button>
       </div>
     </section>
 
@@ -346,6 +369,12 @@
   // ===== Ajustes da casa: edite aqui =====
   const CONFIG = {
     whatsapp: "5521987537624",
+    // Aviso automático no WhatsApp do Gabriel (CallMeBot).
+    // Enquanto estiver vazio, a reserva abre o WhatsApp da casa como antes.
+    gabriel: {
+      telefone: "5521991541852",          // com DDI e DDD, só números. Ex.: "5521999998888"
+      apikey: "",              // código que o CallMeBot manda na ativação
+    },
     // 0 = domingo, 4 = quinta, 5 = sexta, 6 = sábado
     diasAbertos: [4, 5, 6, 0],
     horarios: ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"],
@@ -465,38 +494,105 @@
     atualizar();
   }
 
-  function atualizar() {
-    const nome = $("nome").value.trim();
+  const automatico = Boolean(CONFIG.gabriel.telefone && CONFIG.gabriel.apikey);
+  const digitos = (s) => s.replace(/\D/g, "");
+
+  // (21) 98765-4321
+  function mascararTelefone(v) {
+    const d = digitos(v).slice(0, 11);
+    if (d.length <= 2) return d.length ? `(${d}` : "";
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  }
+
+  function dadosReserva() {
     const linhas = [
       ["DIA", estado.data ? fmtDia(estado.data) : "—"],
       ["HORÁRIO", estado.hora || "—"],
       ["PESSOAS", String(estado.pessoas)],
-      ["NOME", nome || "—"],
+      ["NOME", $("nome").value.trim() || "—"],
+      ["WHATSAPP", $("telefone").value || "—"],
     ];
     if (estado.ocasiao) linhas.push(["OCASIÃO", estado.ocasiao.toLowerCase()]);
-    $("resumo").innerHTML = "";
-    linhas.forEach(([t, v]) => {
-      const dt = document.createElement("dt"); dt.textContent = t;
-      const dd = document.createElement("dd"); dd.textContent = v;
-      $("resumo").append(dt, dd);
-    });
-    const pronto = estado.data && estado.hora && nome.length >= 2;
-    $("enviar").disabled = !pronto;
-    $("enviar").textContent = pronto ? "CONFIRMAR NO WHATSAPP" : (nome.length < 2 && estado.hora ? "DIGITE SEU NOME" : "CONFIRMAR NO WHATSAPP");
+    return linhas;
   }
 
-  function enviar() {
-    const nome = $("nome").value.trim();
-    const msg = [
-      "Olá! Quero reservar uma mesa no GoldBar.",
+  function preencherResumo(dl) {
+    dl.innerHTML = "";
+    dadosReserva().forEach(([t, v]) => {
+      const dt = document.createElement("dt"); dt.textContent = t;
+      const dd = document.createElement("dd"); dd.textContent = v;
+      dl.append(dt, dd);
+    });
+  }
+
+  function atualizar() {
+    const nomeOk = $("nome").value.trim().length >= 2;
+    const telOk = digitos($("telefone").value).length >= 10;
+    preencherResumo($("resumo"));
+    const pronto = estado.data && estado.hora && nomeOk && telOk;
+    $("enviar").disabled = !pronto;
+    let rotulo = automatico ? "CONFIRMAR RESERVA" : "CONFIRMAR NO WHATSAPP";
+    if (estado.hora && !nomeOk) rotulo = "DIGITE SEU NOME";
+    else if (estado.hora && !telOk) rotulo = "DIGITE SEU WHATSAPP";
+    $("enviar").textContent = rotulo;
+  }
+
+  function mensagem(paraEquipe) {
+    const tel = digitos($("telefone").value);
+    return [
+      paraEquipe ? "*NOVA RESERVA · GOLDBAR*" : "Olá! Quero reservar uma mesa no GoldBar.",
       "",
       `*Dia:* ${fmtDia(estado.data)}`,
       `*Horário:* ${estado.hora}`,
       `*Pessoas:* ${estado.pessoas}`,
-      `*Nome:* ${nome}`,
+      `*Nome:* ${$("nome").value.trim()}`,
+      `*WhatsApp:* ${$("telefone").value}`,
       estado.ocasiao ? `*Ocasião:* ${estado.ocasiao.toLowerCase()}` : null,
+      paraEquipe ? `\nResponder ao cliente: https://wa.me/55${tel}` : null,
     ].filter((l) => l !== null).join("\n");
-    window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
+  }
+
+  function abrirWhatsAppDaCasa() {
+    window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensagem(false))}`, "_blank", "noopener");
+  }
+
+  function mostrarSucesso() {
+    preencherResumo($("sucesso-resumo"));
+    $("sucesso-texto").textContent = `Obrigado, ${$("nome").value.trim().split(" ")[0]}! Recebemos o seu pedido e vamos confirmar a sua mesa pelo WhatsApp ${$("telefone").value}.`;
+    ["passo-hora", "passo-pessoas", "passo-nome"].forEach((id) => { $(id).hidden = true; });
+    $("calendario").closest(".passo").hidden = true;
+    $("sucesso").hidden = false;
+    $("reservar").scrollIntoView({ block: "start" });
+  }
+
+  async function enviar() {
+    if (!automatico) { abrirWhatsAppDaCasa(); return; }
+    const botao = $("enviar");
+    botao.disabled = true;
+    botao.textContent = "ENVIANDO...";
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${CONFIG.gabriel.telefone}&apikey=${encodeURIComponent(CONFIG.gabriel.apikey)}&text=${encodeURIComponent(mensagem(true))}`;
+    try {
+      // O CallMeBot não libera leitura da resposta pelo navegador; só falha de rede chega aqui como erro.
+      await fetch(url, { mode: "no-cors" });
+      mostrarSucesso();
+    } catch (e) {
+      // Sem conexão com o CallMeBot: o cliente manda pelo WhatsApp da casa, como antes.
+      abrirWhatsAppDaCasa();
+      atualizar();
+    }
+  }
+
+  function novaReserva() {
+    estado.data = null; estado.hora = null; estado.ocasiao = null;
+    $("nome").value = ""; $("telefone").value = "";
+    $("ocasioes").querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", "false"));
+    ["passo-hora", "passo-pessoas", "passo-nome"].forEach((id) => { $(id).hidden = true; });
+    $("calendario").closest(".passo").hidden = false;
+    $("sucesso").hidden = true;
+    desenharCalendario();
+    mudarPessoas(2 - estado.pessoas);
   }
 
   function abrirPainel(abrir) {
@@ -511,7 +607,11 @@
   $("menos").onclick = () => mudarPessoas(-1);
   $("mais").onclick = () => mudarPessoas(1);
   $("nome").oninput = atualizar;
-  $("nome").onkeydown = (e) => { if (e.key === "Enter") e.target.blur(); };
+  $("nome").onkeydown = (e) => { if (e.key === "Enter") $("telefone").focus(); };
+  $("telefone").oninput = (e) => { e.target.value = mascararTelefone(e.target.value); atualizar(); };
+  $("telefone").onkeydown = (e) => { if (e.key === "Enter") e.target.blur(); };
+  $("nova-reserva").onclick = novaReserva;
+  if (!automatico) $("nota-envio").innerHTML = "Sua mensagem chega pronta no nosso WhatsApp.<br>A equipe responde confirmando a sua mesa.";
   $("ocasioes").querySelectorAll(".chip").forEach((b) => {
     b.onclick = () => {
       estado.ocasiao = estado.ocasiao === b.textContent ? null : b.textContent;
